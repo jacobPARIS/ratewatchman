@@ -1,8 +1,11 @@
 @app
 begin-app
 
+@scheduled
+pull-rates rate(1 day)
+
 @http
-get  /todos
+get  /rates
 post /todos
 post /todos/delete
 
