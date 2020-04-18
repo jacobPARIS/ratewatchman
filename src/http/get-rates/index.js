@@ -79,15 +79,35 @@ exports.handler = async function todos(req) {
 
   const results = await mongo.db().collection('rates').find(filter, options).toArray()
 
+  const rates = results.map(rate => ({
+    id: rate._id,
+    rate: rate.rate,
+    rateDiscretionary: rate.rateDiscretionary,
+    rateType: rate.rateType,
+    rateHold: rate.rateHold,
+    cashback: rate.cashback,
+    compoundingFrequency: rate.compoundingFrequency,
+    lumpPrepayment: rate.lumpPrepayment,
+    paymentIncrease: rate.paymentIncrease,
+    priorRate: rate.priorRate,
+    rateDelta: rate.rateDelta,
+    lenderName: rate.lenderName,
+    url: rate.url,
+    provinces: rate.province.split(','),
+    termYears: rate.termYears,
+    lenderType: rate.lenderType.toUpperCase(),
+    paymentDoubling: rate.paymentDoubling
+  }))
+
   return {
-    statusCode: 201,
+    statusCode: 200,
     headers: {
       'content-type': 'application/json; charset=utf8',
       'cache-control': 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0'
     },
     body: JSON.stringify({
-      count: results.length,
-      results,
+      count: rates.length,
+      rates,
       _links
     })
   }
