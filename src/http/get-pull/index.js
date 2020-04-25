@@ -4,7 +4,7 @@ const axios = require('axios')
 const querystring = require('querystring')
 const { parse } = require('node-html-parser')
 
-const adminTokens = require('../../tokens-admin')
+const adminTokens = require('@architect/shared/tokens-admin')
 
 exports.handler = async function pull(req) {
   const [protocol, token] = req.headers.Authorization.split(' ')

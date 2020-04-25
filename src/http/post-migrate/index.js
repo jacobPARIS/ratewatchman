@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb')
 const promiseRetry = require('promise-retry')
 
-const adminTokens = require('../../tokens-admin')
+const adminTokens = require('@architect/shared/tokens-admin')
 
 exports.handler = async function todos(req) {
   const [protocol, token] = req.headers.Authorization.split(' ')

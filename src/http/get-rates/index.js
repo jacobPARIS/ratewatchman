@@ -3,8 +3,8 @@ const promiseRetry = require('promise-retry')
 
 const querystring = require('querystring')
 
-const adminTokens = require('../../tokens-admin')
-const clientTokens = require('../../tokens-client')
+const adminTokens = require('@architect/shared/tokens-admin')
+const clientTokens = require('@architect/shared/tokens-client')
 
 exports.handler = async function todos(req) {
   const [protocol, token] = req.headers.Authorization.split(' ')
