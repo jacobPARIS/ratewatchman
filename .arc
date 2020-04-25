@@ -5,4 +5,8 @@ begin-app
 pull-rates rate(1 day)
 
 @http
-get  /rates
+get /rates
+get /lenders
+get /pull
+post /checkout
+post /migrate

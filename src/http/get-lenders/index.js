@@ -6,10 +6,10 @@ const querystring = require('querystring')
 const adminTokens = require('../../tokens-admin')
 const clientTokens = require('../../tokens-client')
 
-exports.handler = async function todos(req) {
+exports.handler = async function getLenders(req) {
   const [protocol, token] = req.headers.Authorization.split(' ')
 
-  if (protocol === 'Bearer' && !clientTokens.concat(adminTokens).includes(token)) return {
+  if (protocol === 'Bearer' && !adminTokens.concat(clientTokens).includes(token)) return {
     headers: {
       'WWW-Authenticate': 'Bearer'
     },
@@ -41,46 +41,18 @@ exports.handler = async function todos(req) {
     maxTimeout: 5000,
   })
 
-  const filter = {}
   const options = {}
   const _links = {}
 
   const {
-    lender,
-    termYears,
-    rateType,
-    updatedBefore,
-    updatedAfter,
     limit = 0,
     skip = 0,
   } = req.queryStringParameters
 
-  let originalUrl = `http://${req.headers.Host}${req.path}?${querystring.stringify({ updatedBefore, updatedAfter, limit, skip })}`
+  let originalUrl = `http://${req.headers.Host}${req.path}?${querystring.stringify({ limit, skip })}`
 
-  _links.self =  {
+  _links.self = {
     href: originalUrl
-  }
-
-  if (lender) {
-    filter.lenderName = lender
-  }
-
-  if (termYears) {
-    filter.termYears = Number(termYears)
-  }
-
-  if (rateType) {
-    filter.rateType = rateType
-  }
-
-  if (updatedBefore) {
-    filter.lastUpdated = filter.lastUpdated || {}
-    filter.lastUpdated.$lt = new Date(updatedBefore)
-  }
-
-  if (updatedAfter) {
-    filter.lastUpdated = filter.lastUpdated || {}
-    filter.lastUpdated.$gte = new Date(updatedAfter)
   }
 
   if (Number(limit) > 0) {
@@ -103,26 +75,24 @@ exports.handler = async function todos(req) {
     }
   }
 
-  const results = await mongo.db().collection('rates').find(filter, options).toArray()
+  const [{lenders}] = await mongo.db().collection('rates').aggregate()
+    .group({
+      _id: null,
+      lenders: {
+        $push: "$lenderName"
+      }
+    })
+    .project({
+      _id: 0,
+      lenders: {
+        $setIntersection: ["$lenders"]
+      }
+    })
+    .toArray()
 
-  const rates = results.map(rate => ({
-    id: rate._id,
-    rate: rate.rate,
-    rateDiscretionary: rate.rateDiscretionary,
-    rateType: rate.rateType,
-    rateHoldDays: rate.rateHoldDays,
-    cashback: rate.cashback,
-    compoundingFrequency: rate.compoundingFrequency,
-    lumpPrepayment: rate.lumpPrepayment,
-    paymentIncrease: rate.paymentIncrease,
-    lenderName: rate.lenderName,
-    url: rate.url,
-    provinces: rate.province.split(','),
-    termYears: rate.termYears,
-    lenderType: rate.lenderType.toUpperCase(),
-    paymentDoubling: rate.paymentDoubling,
-    lastUpdated: rate.lastUpdated
-  }))
+  const pagedLenders = limit
+    ? lenders.slice(Number(skip), Number(skip) + Number(limit))
+    : lenders
 
   return {
     statusCode: 200,
@@ -131,8 +101,9 @@ exports.handler = async function todos(req) {
       'cache-control': 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0'
     },
     body: JSON.stringify({
-      count: rates.length,
-      rates,
+      count: lenders.length,
+      limit: Number(limit),
+      lenders: pagedLenders,
       _links
     })
   }

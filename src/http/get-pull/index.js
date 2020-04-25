@@ -4,7 +4,18 @@ const axios = require('axios')
 const querystring = require('querystring')
 const { parse } = require('node-html-parser')
 
+const adminTokens = require('../../tokens-admin')
+
 exports.handler = async function pull(req) {
+  const [protocol, token] = req.headers.Authorization.split(' ')
+
+  if (protocol === 'Bearer' && !adminTokens.includes(token)) return {
+    headers: {
+      'WWW-Authenticate': 'Bearer'
+    },
+    statusCode: 401
+  }
+
   const mongo = new MongoClient('mongodb+srv://alice:kZgW7v8ywwwSXaTh@cluster0-shifn.mongodb.net/test?retryWrites=true&w=majority', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -30,12 +41,20 @@ exports.handler = async function pull(req) {
 
   const url = 'https://www.ratespy.com/wp-content/themes/ratespy-v2/ajax/latest_mortgage_rate_changes.php'
 
-  const recentRate = await mongo.db().collection('rates').findOne({}, {
-    sort: { lastUpdated: -1 }
-  })
+  const afterDateParameter = req.queryStringParameters && req.queryStringParameters.updatedAfter
 
-  const earliestUpdatedDate = new Date(recentRate.lastUpdated)
+  let earliestUpdatedDate
+  if (afterDateParameter) {
+    earliestUpdatedDate = new Date(afterDateParameter)
+  } else {
+    const recentRate = await mongo.db().collection('ratespy').findOne({}, {
+      sort: { lastUpdated: -1 }
+    })
 
+    earliestUpdatedDate = new Date(recentRate.lastUpdated)
+  }
+
+  console.log({ earliestUpdatedDate })
   const params = {
     province: 'Ontario',
     'term-1': '1',
@@ -54,7 +73,7 @@ exports.handler = async function pull(req) {
 
   const { data } = await axios.post(url, querystring.stringify({
     ...params,
-    pg: 1
+    pg: '1'
   }))
 
   const pageNumbers = parse(data).querySelectorAll('.pagination').map(button => {
@@ -108,7 +127,7 @@ exports.handler = async function pull(req) {
           expiresAt.setFullYear(new Date().getFullYear() + 1)
         }
 
-        return mongo.db().collection('rates').findOneAndReplace(
+        return mongo.db().collection('ratespy').findOneAndReplace(
           {
             rateSpyId: id
           },
