@@ -39,7 +39,7 @@ exports.handler = async function getLenders(req) {
   }, {
     retries: 3,
     minTimeout: 2000,
-    maxTimeout: 5000,
+    maxTimeout: 3000,
   })
 
   const options = {}
