@@ -7,9 +7,10 @@ const { parse } = require('node-html-parser')
 const adminTokens = require('@architect/shared/tokens-admin')
 
 exports.handler = async function pull(req) {
-  const [protocol, token] = req.headers.Authorization.split(' ')
+  const authorization = req.headers.Authorization || ''
 
-  if (protocol === 'Bearer' && !adminTokens.includes(token)) return {
+  const [protocol, token] = authorization.split(' ')
+  if (protocol !== 'Bearer' || !adminTokens.includes(token)) return {
     headers: {
       'WWW-Authenticate': 'Bearer'
     },

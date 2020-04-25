@@ -4,14 +4,16 @@ const promiseRetry = require('promise-retry')
 const adminTokens = require('@architect/shared/tokens-admin')
 
 exports.handler = async function todos(req) {
-  const [protocol, token] = req.headers.Authorization.split(' ')
+  const authorization = req.headers.Authorization || ''
 
-  if (protocol === 'Bearer' && !adminTokens.includes(token)) return {
+  const [protocol, token] = authorization.split(' ')
+  if (protocol !== 'Bearer' || !adminTokens.includes(token)) return {
     headers: {
       'WWW-Authenticate': 'Bearer'
     },
     statusCode: 401
   }
+
 
   const mongo = new MongoClient('', {
     useNewUrlParser: true,

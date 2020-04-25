@@ -7,9 +7,10 @@ const adminTokens = require('@architect/shared/tokens-admin')
 const clientTokens = require('@architect/shared/tokens-client')
 
 exports.handler = async function getLenders(req) {
-  const [protocol, token] = req.headers.Authorization.split(' ')
+  const authorization = req.headers.Authorization || ''
 
-  if (protocol === 'Bearer' && !adminTokens.concat(clientTokens).includes(token)) return {
+  const [protocol, token] = authorization.split(' ')
+  if (protocol !== 'Bearer' || !adminTokens.concat(clientTokens).includes(token)) return {
     headers: {
       'WWW-Authenticate': 'Bearer'
     },
