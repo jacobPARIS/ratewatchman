@@ -17,7 +17,7 @@ exports.handler = async function todos(req) {
     statusCode: 401
   }
 
-  const mongo = new MongoClient('mongodb+srv://alice:kZgW7v8ywwwSXaTh@cluster0-shifn.mongodb.net/test?retryWrites=true&w=majority', {
+  const mongo = new MongoClient('mongodb+srv://reed:KZUo9Q5LYWWUGM31@cluster0-shifn.mongodb.net/test?retryWrites=true&w=majority', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

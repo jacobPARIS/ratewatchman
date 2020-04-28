@@ -17,7 +17,7 @@ exports.handler = async function getLenders(req) {
     statusCode: 401
   }
 
-  const mongo = new MongoClient('mongodb+srv://alice:kZgW7v8ywwwSXaTh@cluster0-shifn.mongodb.net/test?retryWrites=true&w=majority', {
+  const mongo = new MongoClient('mongodb+srv://reed:KZUo9Q5LYWWUGM31@cluster0-shifn.mongodb.net/test?retryWrites=true&w=majority', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -76,21 +76,11 @@ exports.handler = async function getLenders(req) {
     }
   }
 
-  const [{lenders}] = await mongo.db().collection('rates').aggregate()
-    .group({
-      _id: null,
-      lenders: {
-        $push: "$lenderName"
-      }
-    })
-    .project({
-      _id: 0,
-      lenders: {
-        $setIntersection: ["$lenders"]
-      }
-    })
+  const lenders = await mongo.db().collection('lenders').find({})
     .toArray()
 
+
+  console.log(lenders)
   const pagedLenders = limit
     ? lenders.slice(Number(skip), Number(skip) + Number(limit))
     : lenders
@@ -104,7 +94,11 @@ exports.handler = async function getLenders(req) {
     body: JSON.stringify({
       count: lenders.length,
       limit: Number(limit),
-      lenders: pagedLenders,
+      lenders: pagedLenders.map(lender => ({
+        name: lender.name,
+        longName: lender.longName,
+        shortName: lender.shortName
+      })),
       _links
     })
   }
